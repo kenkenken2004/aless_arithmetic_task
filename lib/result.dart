@@ -1,4 +1,3 @@
-import 'package:aless_arithmetic_task/main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -95,13 +94,8 @@ class _ResultPage extends State<ResultPage> {
                   backgroundColor: Colors.black),
               onPressed: () {
                 sendData();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const MyHomePage(
-                            title: "ALESS Experiment",
-                          )),
-                );
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
               },
               child: const FittedBox(
                 child: Text(

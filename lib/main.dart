@@ -1,7 +1,9 @@
 import 'dart:core';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:volume_controller/volume_controller.dart';
 
 import 'firebase_options.dart';
 import 'task.dart';
@@ -68,6 +70,26 @@ class _MyHomePageState extends State<MyHomePage> {
   String name = "";
   static const int situationCount = 7;
 
+  final audioPlayer = AudioPlayer();
+  bool isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    //LOOPの設定
+    audioPlayer.setReleaseMode(ReleaseMode.loop);
+    VolumeController().maxVolume();
+    VolumeController().listener((value) {
+      VolumeController().maxVolume();
+    });
+    //再生中か停止中かの状態を取得
+    audioPlayer.onPlayerStateChanged.listen((state) {
+      setState(() {
+        isPlaying = state == PlayerState.playing;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -98,6 +120,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     setState(() {
                       situation = (situation + 1) % situationCount;
                     });
+                    audioPlayer.pause();
+                    if (situation != 0) {
+                      audioPlayer.play(
+                        AssetSource("$situation.mp3"),
+                      );
+                    }
                   },
                   child: FittedBox(
                     child: Text(
