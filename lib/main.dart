@@ -1,9 +1,10 @@
 import 'dart:core';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:excel/excel.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:volume_controller/volume_controller.dart';
 
 import 'firebase_options.dart';
 import 'task.dart';
@@ -78,16 +79,49 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     //LOOPの設定
     audioPlayer.setReleaseMode(ReleaseMode.loop);
-    VolumeController().maxVolume();
-    VolumeController().listener((value) {
-      VolumeController().maxVolume();
-    });
     //再生中か停止中かの状態を取得
     audioPlayer.onPlayerStateChanged.listen((state) {
       setState(() {
         isPlaying = state == PlayerState.playing;
       });
     });
+  }
+
+  void downLoad() async {
+    final answers =
+        await FirebaseFirestore.instance.collection("Answers").get();
+    final Excel excel = Excel.createExcel();
+    final Sheet sheet1 = excel['Stocks Table'];
+    sheet1.cell(CellIndex.indexByString('A1')).value = TextCellValue('time');
+    sheet1.cell(CellIndex.indexByString('B1')).value =
+        TextCellValue('name-hash');
+    sheet1.cell(CellIndex.indexByString('C1')).value =
+        TextCellValue("situation");
+    sheet1.cell(CellIndex.indexByString('D1')).value = TextCellValue("data");
+    int k = 2;
+    for (var doc in answers.docs) {
+      Timestamp time = doc.data()["time"];
+      String nameHash = doc.data()["name-hash"];
+      int situation = doc.data()["situation"];
+      List<int> data = doc.data()["data"].cast<int>();
+      sheet1.cell(CellIndex.indexByString('A$k')).value =
+          TextCellValue(time.toDate().toString());
+      sheet1.cell(CellIndex.indexByString('B$k')).value =
+          TextCellValue(nameHash);
+      print(situation);
+      sheet1.cell(CellIndex.indexByString('C$k')).value =
+          TextCellValue(situation.toString());
+      for (int i = 0; i < 10; i++) {
+        print(data[i]);
+        sheet1
+            .cell(
+                CellIndex.indexByColumnRow(columnIndex: 4 + i, rowIndex: k - 1))
+            .value = TextCellValue(data[i].toString());
+      }
+      k++;
+    }
+    const fileName = 'data.xlsx';
+    excel.save(fileName: fileName);
   }
 
   @override
@@ -174,6 +208,24 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: const FittedBox(
                     child: Text(
                       "START",
+                      style: TextStyle(color: Colors.white, fontSize: 196),
+                    ),
+                  )),
+            ),
+            SizedBox(
+              width: size.width * 0.3,
+              height: maxHeight * 0.2,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(0))),
+                      backgroundColor: Colors.black),
+                  onPressed: () {
+                    downLoad();
+                  },
+                  child: const FittedBox(
+                    child: Text(
+                      "DOWNLOAD",
                       style: TextStyle(color: Colors.white, fontSize: 196),
                     ),
                   )),
